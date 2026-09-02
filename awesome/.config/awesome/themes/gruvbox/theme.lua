@@ -30,6 +30,9 @@ theme.border_normal = "#3c3836"
 theme.border_focus  = "#fe8019"
 theme.border_marked = "#cc241d"
 
+-- Gruvbox bright blue, used for the cheatsheet popup border (widgets/cheatsheet_popup.lua)
+theme.cheatsheet_border_color = "#83a598"
+
 -- There are other variable sets
 -- overriding the default one when
 -- defined, the sets are:

@@ -9,6 +9,7 @@ local menubar = require("menubar")
 local vars = require("config.vars")
 local menu = require("config.menu")
 local hermes_agent = require("config.hermes_agent")
+local cheatsheet_popup = require("widgets.cheatsheet_popup")
 
 local terminal = vars.terminal
 local modkey = vars.modkey
@@ -25,6 +26,11 @@ local globalkeys = gears.table.join(
             { floating = true, width = 900, height = 600, placement = awful.placement.centered })
         end,
         { description = "AI: sandboxed code session", group = "launcher" }),
+    awful.key({ modkey,           }, "/",
+        function()
+            cheatsheet_popup.show_picker()
+        end,
+        { description = "show cheatsheet picker", group = "awesome" }),
     awful.key({ modkey,           }, "s",      hotkeys_popup.show_help,
               {description="show help", group="awesome"}),
     awful.key({ modkey,           }, "Left",   awful.tag.viewprev,
