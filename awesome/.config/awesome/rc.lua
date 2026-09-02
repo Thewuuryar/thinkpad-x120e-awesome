@@ -7,18 +7,19 @@ local gears = require("gears")
 local awful = require("awful")
 require("awful.autofocus")
 
--- Tell systemd --user a graphical session is up. Desktop environments
--- (GNOME/KDE) do this from their own session startup scripts; minimal
--- WMs and display managers (ly included) don't, so without this
--- graphical-session.target never activates and anything WantedBy=
--- graphical-session.target (e.g. hermes-agent.service) never
--- auto-starts on login -- it only ever runs after a manual
--- `systemctl --user start`. Import the X env vars first so units that
--- need DISPLAY/XAUTHORITY (like the urxvt-spawning hermes-agent) see
--- them in the systemd user manager's activation environment.
+-- Tell systemd --user about the X session's DISPLAY/XAUTHORITY, then
+-- start our own awesome-session.target (BindsTo=graphical-session.target
+-- in .config/systemd/user/awesome-session.target). graphical-session.target
+-- itself has RefuseManualStart=yes -- like sway/i3, we can't start it
+-- directly, only pull it in as a side effect of starting something bound
+-- to it. This makes everything WantedBy=graphical-session.target (e.g.
+-- hermes-agent.service) start automatically on login. The two commands
+-- must run synchronously in one shell (not two separate spawns) so the
+-- vars are fully imported before the target starts -- see
+-- https://github.com/swaywm/sway/wiki/Systemd-integration.
 awful.spawn.with_shell(
     "systemctl --user import-environment DISPLAY XAUTHORITY XDG_SESSION_ID XDG_SEAT XDG_VTNR; " ..
-    "systemctl --user start graphical-session.target"
+    "systemctl --user start awesome-session.target"
 )
 -- Widget and layout library
 local wibox = require("wibox")

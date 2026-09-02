@@ -178,11 +178,25 @@ local sheet_textbox = wibox.widget {
     forced_width = TEXT_WIDTH,
 }
 local sheet_scroll_margin = wibox.widget { sheet_textbox, top = 0, widget = wibox.container.margin }
-local sheet_viewport = wibox.widget {
+local sheet_viewport_constraint = wibox.widget {
     sheet_scroll_margin,
     strategy = "exact",
     height   = dpi(200), -- placeholder, resized per-show in show_sheet()
     widget   = wibox.container.constraint,
+}
+-- wibox.container.constraint only limits the LAYOUT size handed to its
+-- child -- it does not clip drawing. Scrolling works by giving the
+-- textbox a negative top margin, so once scrolled the (already laid out)
+-- text keeps drawing above the viewport's top edge with nothing to stop
+-- it, bleeding up behind the title. shape_clip on a background container
+-- clips the child's drawing to `shape` -- it requires a shape to be set
+-- (a plain rectangle here) to have any effect; "clip" alone is NOT a real
+-- property and silently does nothing.
+local sheet_viewport = wibox.widget {
+    sheet_viewport_constraint,
+    shape      = gears.shape.rectangle,
+    shape_clip = true,
+    widget     = wibox.container.background,
 }
 
 local sheet_scrollbar_thumb = wibox.widget { widget = wibox.container.background, bg = beautiful.fg_focus }
@@ -200,8 +214,18 @@ sheet_row:set_first(sheet_viewport)
 sheet_row:set_third(wibox.widget { sheet_scrollbar_track, left = SCROLLBAR_GAP, widget = wibox.container.margin })
 sheet_row.expand = "none"
 
-local sheet_view = wibox.widget {
+-- Opaque background (matches popup bg) so scrolled text can never show
+-- through underneath the title, even before layout settles on a resize.
+-- fixed.vertical stretches each child to the full content width, so this
+-- already spans edge-to-edge within the panel's content area.
+local sheet_title_bar = wibox.widget {
     sheet_title_widget,
+    bg     = beautiful.bg_normal,
+    widget = wibox.container.background,
+}
+
+local sheet_view = wibox.widget {
+    sheet_title_bar,
     sheet_row,
     spacing = CONTENT_SPACING,
     layout  = wibox.layout.fixed.vertical,
@@ -343,7 +367,7 @@ local function show_sheet(entry)
     -- viewport (where scrolling happens) gets exactly what's left.
     local _, title_h = sheet_title_widget:get_preferred_size(awful.screen.focused())
     sheet_viewport_height = panel_height - title_h - CONTENT_SPACING - (2 * CONTENT_MARGIN)
-    sheet_viewport.height = sheet_viewport_height
+    sheet_viewport_constraint.height = sheet_viewport_height
 
     -- Measure the ACTUAL rendered height at the text's real width (wrapped
     -- lines take more vertical space than a naive newline count assumes --
