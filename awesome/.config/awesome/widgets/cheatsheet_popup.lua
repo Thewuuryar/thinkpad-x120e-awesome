@@ -26,15 +26,27 @@ local CHEATSHEETS_DIR = os.getenv("HOME") .. "/.config/cheatsheets"
 -- depends on content size. forced_width (not min/max) locks the size in
 -- immediately, with no dependency on layout timing before placement.
 local POPUP_WIDTH = dpi(420)
-local SCREEN_MARGIN = dpi(8)
 local CONTENT_MARGIN = dpi(14)
+-- Outer gap from the workarea edge to the OUTSIDE of the popup's border --
+-- X11 draws a window's border outside its declared width/height, so bw is
+-- folded into the x/y offsets below rather than trying to inset the
+-- content size itself. Top/right kept tighter than bottom by preference.
+local PANEL_MARGIN_TOP = dpi(4)
+local PANEL_MARGIN_RIGHT = dpi(4)
+local PANEL_MARGIN_BOTTOM = dpi(8)
 local CONTENT_SPACING = dpi(8)
 
--- Approximate line height for the monospace cheatsheet font, used to turn
--- "number of lines" into a scrollable content height -- same idea as
--- wifi_popup.lua's fixed ROW_HEIGHT, just for text lines instead of rows.
+-- Approximate line height for the monospace cheatsheet font, used only as
+-- the mouse-wheel scroll step size (actual scrollable content height is
+-- measured directly via textbox:get_height_for_width, not estimated).
 local LINE_HEIGHT = dpi(18)
 local SCROLLBAR_WIDTH = dpi(6)
+local SCROLLBAR_GAP = dpi(6)
+
+-- Width actually available to the sheet's text: total popup width minus
+-- the outer content margins and the reserved scrollbar column. Constant
+-- since POPUP_WIDTH never changes at runtime.
+local TEXT_WIDTH = POPUP_WIDTH - (2 * CONTENT_MARGIN) - SCROLLBAR_WIDTH - SCROLLBAR_GAP
 
 -- ==== Directory scan + frontmatter/markdown parsing ====
 --
@@ -158,7 +170,13 @@ end
 
 local sheet_title_widget = wibox.widget { widget = wibox.widget.textbox, font = header_font }
 
-local sheet_textbox = wibox.widget { widget = wibox.widget.textbox, font = font }
+-- forced_width is set once here (not per-show) so get_height_for_width's
+-- wrap measurement below matches exactly what will actually be rendered.
+local sheet_textbox = wibox.widget {
+    widget       = wibox.widget.textbox,
+    font         = font,
+    forced_width = TEXT_WIDTH,
+}
 local sheet_scroll_margin = wibox.widget { sheet_textbox, top = 0, widget = wibox.container.margin }
 local sheet_viewport = wibox.widget {
     sheet_scroll_margin,
@@ -179,7 +197,7 @@ local sheet_scrollbar_track = wibox.widget {
 
 local sheet_row = wibox.layout.align.horizontal()
 sheet_row:set_first(sheet_viewport)
-sheet_row:set_third(wibox.widget { sheet_scrollbar_track, left = dpi(6), widget = wibox.container.margin })
+sheet_row:set_third(wibox.widget { sheet_scrollbar_track, left = SCROLLBAR_GAP, widget = wibox.container.margin })
 sheet_row.expand = "none"
 
 local sheet_view = wibox.widget {
@@ -205,11 +223,6 @@ local picker_view = wibox.widget {
 }
 
 -- ==== Single popup, content swapped between picker_view / sheet_view ====
---
--- border_width is drawn OUTSIDE the popup's x/y/width/height box in X11 --
--- the previous version didn't account for this, so the panel's right/top
--- edge (border included) landed just past the screen edge. dock() below
--- insets by border_width to compensate.
 
 local content_margin = wibox.container.margin(picker_view, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN, CONTENT_MARGIN)
 
@@ -222,31 +235,55 @@ local panel = awful.popup {
     border_width = beautiful.border_width,
     border_color = beautiful.cheatsheet_border_color,
     forced_width = POPUP_WIDTH,
+    -- awful.popup is "auto-resized": by default it re-runs its own
+    -- placement (awful.placement.next_to) any time its widget content or
+    -- layout changes (e.g. swapping sheets, resizing the viewport), which
+    -- silently overrides any x/y set via dock() below. Disabling it here
+    -- makes dock() the ONLY thing that ever moves this popup.
+    placement    = false,
     shape        = function(cr, w, h) gears.shape.rounded_rect(cr, w, h, 6) end,
 }
 
--- Docks the panel to the right edge, top aligned just under the wibar,
--- inset so the border (drawn outside the content box) stays fully
--- on-screen too.
-local function dock(height)
+-- Docks the panel to the right edge, top aligned just under the wibar.
+-- X11 draws a window's border outside its declared width/height, so bw is
+-- folded into the x/y offsets here rather than trying to inset the
+-- content size itself.
+--
+-- awful.popup re-fits itself to its widget's NATURAL content size on every
+-- layout pass (independent of placement=false, which only disables
+-- re-positioning, not re-sizing) -- so panel:geometry()'s height alone gets
+-- silently overwritten back to the content height shortly after. Forcing
+-- forced_height on the top-level widget itself is what actually pins the
+-- size, since fit_widget() uses forced_height instead of computing one.
+local function dock(content_height)
     local workarea = awful.screen.focused().workarea
     local bw = beautiful.border_width
+    content_margin.forced_width = POPUP_WIDTH
+    content_margin.forced_height = content_height
     panel:geometry({
-        x      = workarea.x + workarea.width - POPUP_WIDTH - SCREEN_MARGIN - bw,
-        y      = workarea.y + SCREEN_MARGIN,
+        x      = workarea.x + workarea.width - PANEL_MARGIN_RIGHT - bw - POPUP_WIDTH,
+        y      = workarea.y + PANEL_MARGIN_TOP + bw,
         width  = POPUP_WIDTH,
-        height = height - (2 * bw),
+        height = content_height,
     })
+end
+
+-- Content height that makes the panel's bottom border land exactly
+-- PANEL_MARGIN_BOTTOM above the bottom of the workarea.
+local function fill_height()
+    local workarea = awful.screen.focused().workarea
+    local bw = beautiful.border_width
+    return workarea.height - PANEL_MARGIN_TOP - PANEL_MARGIN_BOTTOM - (2 * bw)
 end
 
 -- ==== Scroll state (sheet view only -- the picker is always short) ====
 
 local sheet_scroll_offset_lines = 0
-local sheet_total_lines = 0
 local sheet_viewport_height = 0
+local sheet_measured_content_height = 0
 
 local function apply_sheet_scroll()
-    local content_px = sheet_total_lines * LINE_HEIGHT
+    local content_px = sheet_measured_content_height
     local max_offset_px = math.max(0, content_px - sheet_viewport_height)
     local offset_px = math.max(0, math.min(sheet_scroll_offset_lines * LINE_HEIGHT, max_offset_px))
     sheet_scroll_margin.top = -offset_px
@@ -300,16 +337,18 @@ local function show_sheet(entry)
     sheet_title_widget.markup = "<b>" .. entry.title .. "</b>"
     sheet_textbox.markup = entry.markup
 
-    local workarea = awful.screen.focused().workarea
-    local panel_height = workarea.height - (2 * SCREEN_MARGIN)
+    local panel_height = fill_height()
 
     -- Reserve space for the title row + spacing + outer margins so the
     -- viewport (where scrolling happens) gets exactly what's left.
-    local title_h = LINE_HEIGHT + dpi(4)
+    local _, title_h = sheet_title_widget:get_preferred_size(awful.screen.focused())
     sheet_viewport_height = panel_height - title_h - CONTENT_SPACING - (2 * CONTENT_MARGIN)
     sheet_viewport.height = sheet_viewport_height
 
-    sheet_total_lines = select(2, entry.markup:gsub("\n", "\n")) + 1
+    -- Measure the ACTUAL rendered height at the text's real width (wrapped
+    -- lines take more vertical space than a naive newline count assumes --
+    -- this was the cause of content being unreachable via scroll before).
+    sheet_measured_content_height = sheet_textbox:get_height_for_width(TEXT_WIDTH, awful.screen.focused())
     sheet_scroll_offset_lines = 0
     apply_sheet_scroll()
 
@@ -349,20 +388,20 @@ function M.show_picker()
     content_margin.widget = picker_view
     panel.visible = true
 
-    -- Size the picker to its natural content height (it's always short --
-    -- one line per registered sheet) rather than the full screen height.
-    local _, natural_h = picker_view:fit({ dpi = 96 }, POPUP_WIDTH - 2 * CONTENT_MARGIN, 4096)
-    dock((natural_h or 200) + 2 * CONTENT_MARGIN)
+    -- Keep the picker the same fixed size as the sheet view (fill_height),
+    -- rather than auto-sizing to its natural (short) content height.
+    dock(fill_height())
 
     active_keygrabber = awful.keygrabber.run(function(mods, key, event)
         if event ~= "press" then return end
+
+        local lower_key = key:lower()
 
         if key == "Escape" then
             hide_panel()
             return
         end
 
-        local lower_key = key:lower()
         local selected = nil
         for i, entry in ipairs(current_sheets) do
             if entry.key == lower_key or tostring(i) == key then
