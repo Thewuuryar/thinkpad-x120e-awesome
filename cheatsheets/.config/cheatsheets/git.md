@@ -21,6 +21,15 @@ title: Git
 - `git branch -d <name>`          -- delete merged branch
 - `git switch -`                  -- back to previous branch
 
+# merge branch back to main
+
+- `git switch main`               -- go to main first
+- `git pull`                      -- make sure main is up to date
+- `git merge <branch>`            -- merge branch into main
+- `git push`                      -- push updated main
+- `git branch -d <branch>`        -- delete local branch after merge
+- `git push origin --delete <branch>` -- delete remote branch after merge
+
 # sync
 
 - `git fetch`                     -- fetch remote refs
