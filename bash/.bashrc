@@ -12,11 +12,16 @@ PS1='[\u@\h \W]\$ '
 # Created by `pipx` on 2026-08-29 06:55:02
 export PATH="$PATH:/home/paul/.local/bin"
 
+# ===== Starship prompt =====
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init bash)"
+fi
+
 # ===== Git Workflow Helpers =====
 # gbranch <type>/<name>  -- start new branch off up-to-date main
 gbranch() {
   if [ -z "$1" ]; then echo "usage: gbranch <type>/<name>"; return 1; fi
-  git switch main && git pull && git swirch -c "$1"
+  git switch main && git pull && git switch -c "$1"
 }
 
 # gmerge (run from feature branch) -- Merge branch and delete
