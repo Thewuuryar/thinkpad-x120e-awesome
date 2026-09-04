@@ -1,0 +1,77 @@
+# Starship prompt config -- gruvbox (dark) theme
+# https://starship.rs/config/
+#
+# Install (on the laptop, Arch): sudo pacman -S starship
+# Then source this file's init line from ~/.bashrc (see .bashrc in this
+# same dotfiles package) and stow so it lands at ~/.config/starship.toml.
+
+format = """
+[](fg:bg1)\
+$os\
+$username\
+[](bg:bg2 fg:bg1)\
+$directory\
+[](fg:bg2 bg:bg3)\
+$git_branch\
+$git_status\
+[](fg:bg3 bg:bg0)\
+$cmd_duration\
+[ ](fg:bg0)
+$character"""
+
+palette = "gruvbox_dark"
+
+[palettes.gruvbox_dark]
+bg0 = "#282828"
+bg1 = "#3c3836"
+bg2 = "#504945"
+bg3 = "#665c54"
+fg  = "#ebdbb2"
+red = "#fb4934"
+green = "#b8bb26"
+yellow = "#fabd2f"
+blue = "#83a598"
+purple = "#d3869b"
+aqua = "#8ec07c"
+orange = "#fe8019"
+gray = "#928374"
+
+[os]
+disabled = false
+style = "bg:bg1 fg:fg"
+format = "[ $symbol ]($style)"
+
+[os.symbols]
+Arch = "󰣇"
+
+[username]
+show_always = true
+style_user = "bg:bg1 fg:fg"
+style_root = "bg:bg1 fg:red"
+format = "[$user ]($style)"
+
+[directory]
+style = "bg:bg2 fg:yellow"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncate_to_repo = true
+truncation_symbol = "…/"
+
+[git_branch]
+style = "bg:bg3 fg:aqua"
+format = "[ $symbol$branch ]($style)"
+symbol = " "
+
+[git_status]
+style = "bg:bg3 fg:orange"
+format = "[($all_status$ahead_behind )]($style)"
+
+[cmd_duration]
+style = "bg:bg0 fg:gray"
+format = "[ took $duration ]($style)"
+min_time = 2_000
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold green)"
