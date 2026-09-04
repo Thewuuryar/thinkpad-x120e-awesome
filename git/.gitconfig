@@ -1,8 +1,14 @@
+[init]
+  defaultBranch = main
+[user]
+  email = 8893852+Thewuuryar@users.noreply.github.com
+  name = thewuuryar
+
 [alias]
   create = switch -c
   st = status
   unstage = restore --staged
   amend = commit --amend
-  last = log -i HEAD
+  last = log -1 HEAD
   graph = log --oneline --graph -20
   unmerged = log --oneline main..HEAD
