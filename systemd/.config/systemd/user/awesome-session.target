@@ -1,0 +1,14 @@
+[Unit]
+Description=AwesomeWM graphical session
+Documentation=man:systemd.special(7)
+# graphical-session.target itself has RefuseManualStart=yes, so it can
+# only be reached as a side effect of starting something bound to it --
+# this is the standard pattern used by sway/i3 and other non-DE window
+# managers (see https://github.com/swaywm/sway/wiki/Systemd-integration).
+# Starting
+# THIS target (from rc.lua, on Awesome startup) pulls graphical-session
+# target along as part of the same transaction, which in turn starts
+# everything WantedBy=graphical-session.target (e.g. hermes-agent.service).
+BindsTo=graphical-session.target
+Wants=graphical-session-pre.target
+After=graphical-session-pre.target

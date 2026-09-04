@@ -1,0 +1,18 @@
+[Unit]
+Description=Hermes Agent floating terminal (urxvt + podman exec)
+After=hermes.service graphical-session.target
+Requires=hermes.service
+PartOf=graphical-session.target
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+[Service]
+Type=simple
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 30); do /usr/bin/podman exec hermes true 2>/dev/null && exit 0; sleep 1; done; exit 1'
+ExecStart=/usr/bin/urxvt -name HermesAgent -bg '#1d2021' -fg '#ebdbb2' -e /usr/bin/podman exec -it hermes hermes
+ExecStop=/usr/bin/pkill -f "urxvt -name HermesAgent"
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

@@ -1,0 +1,20 @@
+[Unit]
+Description=Hermes Agent Container
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=-/usr/bin/podman rm -f hermes
+ExecStart=/usr/bin/podman run -d \
+  --name hermes \
+  --restart unless-stopped \
+  -v %h/.hermes:/opt/data \
+  -v %h/ai-workspace:/opt/data/workspace \
+  --userns=keep-id:uid=10000,gid=10000 \
+  docker.io/nousresearch/hermes-agent sleep infinity
+ExecStop=/usr/bin/podman stop -t 10 hermes
+
+[Install]
+WantedBy=default.target
