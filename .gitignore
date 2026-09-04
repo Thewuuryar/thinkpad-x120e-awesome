@@ -1,0 +1,15 @@
+# Secrets / credentials -- never commit these
+*.nmconnection
+*secret*
+*token*
+*.key
+*.pem
+.env
+id_rsa*
+id_ed25519*
+known_hosts
+
+# Editor/OS cruft
+*.swp
+*.bak
+.DS_Store
