@@ -1,0 +1,99 @@
+# Starship prompt (gruvbox theme) -- config at ~/.config/starship.toml
+# Install on Arch: sudo pacman -S starship
+if command -v starship >/dev/null 2>&1; then
+    eval "$(starship init bash)"
+fi
+
+# Git workflow helpers -- branch/commit/merge shortcuts.
+# See ~/.config/cheatsheets/git.md (appendix: aliases & scripts) for
+# the matching cheatsheet entry.
+#
+# gbranch <type>/<name>  -- start a new branch off up-to-date main
+# gmerge-squash          -- squash-merge current branch into main
+# gmerge                 -- --no-ff merge current branch into main
+# gc                     -- stage + commit (prompted or -m)
+
+# Start a new feature branch off up-to-date main
+# usage: gbranch feat/vim-cheat-sheet
+gbranch() {
+    if [ -z "$1" ]; then echo "usage: gbranch <type>/<name>"; return 1; fi
+    git switch main && git pull && git switch -c "$1"
+}
+
+# Finish current branch: squash-merge into main, push, delete branch
+# usage: gmerge-squash   (run from the feature branch)
+gmerge-squash() {
+    local branch
+    branch=$(git branch --show-current)
+    if [ "$branch" = "main" ]; then echo "already on main"; return 1; fi
+
+    git switch main && git pull \
+        && git merge --squash "$branch" \
+        && git commit \
+        && git push \
+        && git branch -d "$branch" \
+        && git push origin --delete "$branch" 2>/dev/null
+}
+
+# Finish current branch with a real merge commit instead of squash
+# usage: gmerge   (run from the feature branch)
+gmerge() {
+    local branch
+    branch=$(git branch --show-current)
+    if [ "$branch" = "main" ]; then echo "already on main"; return 1; fi
+
+    git switch main && git pull \
+        && git merge --no-ff "$branch" \
+        && git push \
+        && git branch -d "$branch" \
+        && git push origin --delete "$branch" 2>/dev/null
+}
+
+# Stage everything (or given paths) and commit with a
+# type(scope): summary message, conventional-commits style
+# usage: gc                    -- stage all, prompt for message
+#        gc path/to/file       -- stage only that path, prompt
+#        gc -m "fix: typo"     -- skip prompt, pass message straight through
+gc() {
+    if [ "$1" = "-m" ]; then
+        shift
+        git add -A && git commit -m "$*"
+        return
+    fi
+
+    if [ -n "$1" ]; then
+        git add "$@"
+    else
+        git add -A
+    fi
+
+    # nothing staged? bail early instead of opening an empty commit prompt
+    if git diff --cached --quiet; then
+        echo "nothing staged"
+        return 1
+    fi
+
+    echo "type (feat/fix/docs/style/refactor/perf/test/chore/ci): "
+    read -r type
+    echo "scope (optional, enter to skip): "
+    read -r scope
+    echo "summary: "
+    read -r summary
+
+    if [ -n "$scope" ]; then
+        git commit -m "${type}(${scope}): ${summary}"
+    else
+        git commit -m "${type}: ${summary}"
+    fi
+}
+
+# Git aliases -- add these to ~/.gitconfig under [alias] instead of here:
+#
+# [alias]
+#     create = switch -c
+#     st = status
+#     unstage = restore --staged
+#     amend = commit --amend
+#     last = log -1 HEAD
+#     graph = log --oneline --graph -20
+#     unmerged = log --oneline main..HEAD
