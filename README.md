@@ -2,50 +2,40 @@
 
 Personal Arch Linux + AwesomeWM configuration, managed with GNU stow.
 
-This copy lives at `~/ai-workspace/dotfiles/` (mounted into the Hermes
-container at `/opt/data/workspace/dotfiles/`) as a **working copy** --
-it's the whole `~/dotfiles/` folder, copied in wholesale so files can be
-passed back and forth between the host and Hermes without one-off copies.
-The real, git-tracked source of truth is `~/dotfiles/` on the host; this
-copy is not itself a git repo and is not backed up on its own (see
-`LAPTOP_SETUP_REPRODUCIBILITY.md` section 3 for how the two relate and
-how to keep them in sync).
+This directory is a **plain-file working copy** of `~/dotfiles/` from
+the host, mounted here so files can move easily between the host and
+Hermes. It is not itself a git repo. The real source of truth is
+`~/dotfiles/` on the host (git, pushed to GitHub, stow-symlinked live).
+Edit here, then copy changes back to `~/dotfiles/` and commit/push from
+there.
 
 ## Contents (one directory per stow package)
 
 - `awesome/.config/awesome/` -- AwesomeWM config (gruvbox theme)
-- `bash/.bashrc` -- shell functions/aliases (`gbranch`, `gmerge`,
-  `gmerge-squash`, `gcommit`) for the git workflow in `git.md`, plus
-  starship prompt init
-- `cheatsheets/.config/cheatsheets/` -- markdown cheatsheets shown by the
-  `Super+/` panel (see `cheatsheets.md` for how the panel renders them,
-  and `git.md` for the git workflow used in this repo)
-- `git/.gitconfig` -- git identity (GitHub noreply email) and aliases
-  (`create`, `st`, `unstage`, `amend`, `last`, `graph`, `unmerged`)
-- `ly/etc/ly/config.ini` -- ly display manager config (needs
-  `sudo stow -t /`, not a home-dir target); `config.ini.orig` alongside
-  it is the untouched upstream default, kept only for diffing, not part
-  of the stowed package
-- `starship/.config/starship.toml` -- starship prompt, gruvbox dark theme
-- `systemd/.config/systemd/user/` -- `hermes.service`,
-  `hermes-agent.service`, `awesome-session.target` (see
-  `LAPTOP_SETUP_REPRODUCIBILITY.md` section 4 for how these work)
-- `xorg/.Xresources`, `xorg/.xinitrc` -- urxvt gruvbox colors/fonts, X
-  session startup
-- `vim/` -- reserved package, empty so far
-- `.gitignore` -- never commit secrets/keys/`.env`/NetworkManager
-  connection files; see that file for the full list
+- `bash/.bashrc` -- shell aliases/functions (`gbranch`, `gmerge`,
+  `gmerge-squash`, `gcommit`) plus starship prompt init
+- `cheatsheets/.config/cheatsheets/` -- markdown cheatsheets for the
+  `Super+/` panel
+- `git/.gitconfig` -- git identity + aliases
+- `ly/etc/ly/config.ini` -- ly display manager config (system target,
+  `sudo stow -t /`; `config.ini.orig` is the stock default, kept for
+  diffing only)
+- `starship/.config/starship.toml` -- prompt, gruvbox dark theme
+- `systemd/.config/systemd/user/` -- Hermes container + agent units
+- `xorg/.Xresources`, `xorg/.xinitrc` -- urxvt colors/fonts, X startup
+- `vim/` -- reserved, empty for now
+- `.gitignore` -- secrets/keys/`.env`/NetworkManager exclusions
 - `LICENSE` -- MIT
 
-## Applying this config
+## Docs
 
-See `DOTFILES_STOW_WORKFLOW.md` for the full stow workflow, and
-`LAPTOP_SETUP_REPRODUCIBILITY.md` for full disaster-recovery
-setup (OS, packages, systemd units).
+- `DOTFILES_STOW_WORKFLOW.md` -- how stow is wired, adding packages,
+  secret hygiene, disaster recovery
+- `LAPTOP_SETUP_REPRODUCIBILITY.md` -- full machine rebuild (OS,
+  packages, Hermes systemd integration)
 
 ## Git workflow
 
-This repo follows the workflow documented in
-`.config/cheatsheets/git.md`: short-lived `<type>/<name>` branches
-off `main`, conventional commit messages, squash or `--no-ff`
-merge back to main, delete branch after merging.
+Short-lived `<type>/<name>` branches off `main`, conventional commit
+messages, squash or `--no-ff` merge back to main, delete branch after
+merging. Full cheatsheet: `.config/cheatsheets/git.md`.
