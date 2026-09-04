@@ -1,0 +1,41 @@
+! gruvbox dark
+*background: #282828
+*foreground: #ebdbb2
+*color0:     #282828
+*color8:     #928374
+*color1:     #cc241d
+*color9:     #fb4934
+*color2:     #98971a
+*color10:    #b8bb26
+*color3:     #d79921
+*color11:    #fabd2f
+*color4:     #458588
+*color12:    #83a598
+*color5:     #b16286
+*color13:    #d3869b
+*color6:     #689d6a
+*color14:    #8ec07c
+*color7:     #a89984
+*color15:    #ebdbb2
+
+URxvt.scrollBar: true
+URxvt.scrollBar_riht: true
+URxvt.scrollstyle: plain
+URxvt.scrollColor: #458588
+URxvt.troughColor: #282828
+
+! perl live font resize
+URxvt.perl-ext-common: default,resize-font
+URxvt.keysym.C-plus: resize-font:bigger
+URxvt.keysym.C-minus: resize-font:smaller
+URxvt.keysym.C-equal: resize-font:reset
+
+! disable iso14755 mode for ctrl + shift keypress
+URxvt.iso14755: false
+URxvt.iso14755_52: false
+
+! enable nerd font in terminal
+URxvt.font: xft:FantasqueSansM Nerd Font Mono:size=13
+URxvt.boldFont: xft:FantasqueSansM Nerd Font Mono:bold:size=13
+URxvt.italicFont: xft:FantasqueSansM Nerd Font Mono:italic:size=13
+URxvt.boldItalicFont: xft:FantasqueSansM Nerd Font Mono:bold:italic:size=13
