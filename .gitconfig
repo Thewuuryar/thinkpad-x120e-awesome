@@ -1,0 +1,8 @@
+[alias]
+  create = switch -c
+  st = status
+  unstage = restore --staged
+  amend = commit --amend
+  last = log -i HEAD
+  graph = log --oneline --graph -20
+  unmerged = log --oneline main..HEAD
