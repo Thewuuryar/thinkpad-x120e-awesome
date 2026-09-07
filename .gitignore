@@ -13,3 +13,4 @@ known_hosts
 *.swp
 *.bak
 .DS_Store
+*/.vim/undodir/*
