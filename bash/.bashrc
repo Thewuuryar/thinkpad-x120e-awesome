@@ -7,6 +7,7 @@
 
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
+alias dotdiff='vim -c "DirDiff $HOME/dotfiles $HOME/ai-workspace/dotfiles"'
 PS1='[\u@\h \W]\$ '
 
 # Created by `pipx` on 2026-08-29 06:55:02
