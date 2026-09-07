@@ -12,6 +12,10 @@ PS1='[\u@\h \W]\$ '
 # Created by `pipx` on 2026-08-29 06:55:02
 export PATH="$PATH:$HOME/.local/bin"
 
+# ===== Terminal Browser =====
+export BROWSER=cha-newterm
+
+
 # ===== Starship prompt =====
 if command -v starship >/dev/null 2>&1; then
   eval "$(starship init bash)"
