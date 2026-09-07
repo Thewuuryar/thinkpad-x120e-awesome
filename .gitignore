@@ -13,4 +13,6 @@ known_hosts
 *.swp
 *.bak
 .DS_Store
-*/.vim/undodir/*
+
+# vim persistent undo history (local, not meant to be shared/committed)
+vim/.vim/undodir/

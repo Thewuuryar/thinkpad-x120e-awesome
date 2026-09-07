@@ -30,4 +30,4 @@ set list listchars=tab:>\ ,trail:.   " show tabs/trailing whitespace (ASCII, no 
 set laststatus=2             " always show statusline (buffer name, position)
 set mouse=a                  " optional: mouse support for scroll/resize
 
-let g:DirDiffExcludes = ".git"
+let g:DirDiffExcludes = ".git,undodir"
